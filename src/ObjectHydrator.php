@@ -3,7 +3,7 @@
 namespace WebChemistry\ObjectHydrator;
 
 use LogicException;
-use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Throwable;
 use WebChemistry\ObjectHydrator\Exceptions\SerializationException;
@@ -13,13 +13,13 @@ use WebChemistry\ObjectHydrator\Normalizer\ObjectStrictNormalizer;
 class ObjectHydrator implements ObjectHydratorInterface
 {
 
-	private Serializer $serializer;
+	private DenormalizerInterface $denormalizer;
 
 	private ValidatorInterface $validator;
 
-	public function __construct(ValidatorInterface $validator)
+	public function __construct(ValidatorInterface $validator, ?DenormalizerInterface $denormalizer = null)
 	{
-		$this->serializer = new Serializer([new ObjectStrictNormalizer()]);
+		$this->denormalizer = $denormalizer ?? new ObjectStrictNormalizer();
 		$this->validator = $validator;
 	}
 
@@ -35,7 +35,7 @@ class ObjectHydrator implements ObjectHydratorInterface
 		}
 
 		try {
-			$object = $this->serializer->denormalize($values, $className);
+			$object = $this->denormalizer->denormalize($values, $className);
 			assert(is_object($object));
 		} catch (Throwable $exception) {
 			throw new SerializationException($this->normalizeSerializationMessage($exception), $exception);
